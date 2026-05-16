@@ -2,8 +2,14 @@ import axios from 'axios'
 import { store } from '@/store'
 import { logout, setTokens } from '@/store/slices/authSlice'
 
+// In production, VITE_API_URL points to the backend (e.g. https://career-hub-api.railway.app)
+// In development, Vite proxy forwards /api → localhost:5000
+const baseURL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 })
@@ -40,7 +46,7 @@ api.interceptors.response.use(
       const refreshToken = store.getState().auth.refreshToken
       if (!refreshToken) { store.dispatch(logout()); return Promise.reject(error) }
       try {
-        const { data } = await axios.post('/api/auth/refresh-token', { refreshToken })
+        const { data } = await axios.post(`${baseURL}/auth/refresh-token`, { refreshToken })
         const newToken = data.data.accessToken
         store.dispatch(setTokens({ accessToken: newToken, refreshToken }))
         processQueue(null, newToken)
