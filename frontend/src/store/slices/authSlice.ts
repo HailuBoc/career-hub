@@ -44,6 +44,11 @@ export const loginUser = createAsyncThunk(
   }
 )
 
+// Legacy export — kept so old pages that import it still compile
+export const registerUser = createAsyncThunk('auth/register', async (_: unknown, { rejectWithValue }) => {
+  return rejectWithValue('Registration not available')
+})
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -61,6 +66,10 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken
       localStorage.setItem('accessToken', action.payload.accessToken)
       localStorage.setItem('refreshToken', action.payload.refreshToken)
+    },
+    // Legacy — kept so ProfilePage import compiles
+    updateUser: (state, _action: PayloadAction<Partial<AdminUser>>) => {
+      // no-op in simplified app
     },
     clearError: (state) => { state.error = null },
   },
@@ -96,5 +105,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { logout, setTokens, clearError } = authSlice.actions
+export const { logout, setTokens, updateUser, clearError } = authSlice.actions
 export default authSlice.reducer

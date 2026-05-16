@@ -12,6 +12,10 @@ export const useAuth = () => {
     isInitialized,
     error,
     isAuthenticated: !!user && !!accessToken,
+    isAdmin: user?.role === 'ADMIN',
+    // Legacy — always false in this simplified app
+    isJobSeeker: false,
+    isRecruiter: false,
     logout: () => dispatch(logout()),
   }
 }

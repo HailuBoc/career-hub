@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/Avatar'
-import { getInitials } from '@/lib/utils'
 
 const seekerLinks = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -44,7 +43,6 @@ export default function DashboardLayout() {
   const navigate = useNavigate()
 
   const links = user?.role === 'ADMIN' ? adminLinks : user?.role === 'RECRUITER' ? recruiterLinks : seekerLinks
-  const profile = user?.profile
 
   const handleLogout = () => {
     logout()
@@ -65,14 +63,12 @@ export default function DashboardLayout() {
       <div className="p-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={profile?.avatar} />
-            <AvatarFallback className="text-xs">
-              {getInitials(profile?.firstName, profile?.lastName)}
-            </AvatarFallback>
+            <AvatarImage src={undefined} />
+            <AvatarFallback className="text-xs">AD</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate text-slate-900 dark:text-slate-100">
-              {profile?.firstName} {profile?.lastName}
+              {user?.username || 'Admin'}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role?.toLowerCase()}</p>
           </div>

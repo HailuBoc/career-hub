@@ -1,8 +1,6 @@
-import api from './api'
-
+// Legacy stub — not used in this app
 export const notificationService = {
-  getNotifications: (params = {}) => api.get('/notifications', { params }),
-  markAsRead: (id: string) => api.put(`/notifications/${id}/read`),
-  markAllRead: () => api.put('/notifications/all/read'),
-  delete: (id: string) => api.delete(`/notifications/${id}`),
+  getNotifications: (_params?: unknown) => Promise.resolve({ data: { data: [], pagination: {} } }),
+  markAsRead: (_id: string) => Promise.resolve({ data: {} }),
+  delete: (_id: string) => Promise.resolve({ data: {} }),
 }

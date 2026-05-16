@@ -56,9 +56,9 @@ export const EXPERIENCE_LEVELS: Record<string, string> = {
 }
 
 export const APPLICATION_STATUSES: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
-  REVIEWING: { label: 'Reviewing', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  PENDING:     { label: 'Pending',     color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  REVIEWING:   { label: 'Reviewing',   color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
   SHORTLISTED: { label: 'Shortlisted', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' },
-  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-  HIRED: { label: 'Hired', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+  REJECTED:    { label: 'Rejected',    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  HIRED:       { label: 'Hired',       color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
 }
