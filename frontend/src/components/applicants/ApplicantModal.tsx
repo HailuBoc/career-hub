@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { X, Upload, User } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -21,15 +21,19 @@ export default function ApplicantModal({ applicant, onClose, onSuccess }: Props)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string>(applicant?.photo || '')
 
+  // Combine firstName + lastName into a single fullName field for display
+  const initialFullName = applicant
+    ? `${applicant.firstName} ${applicant.lastName}`.trim()
+    : ''
+
   const [form, setForm] = useState({
-    firstName: applicant?.firstName || '',
-    lastName:  applicant?.lastName  || '',
-    age:       applicant?.age?.toString() || '',
-    gender:    applicant?.gender    || 'MALE',
-    passportNo:applicant?.passportNo || '',
-    jobId:     applicant?.jobId     || '',
-    status:    applicant?.status    || 'PENDING',
-    notes:     applicant?.notes     || '',
+    fullName:   initialFullName,
+    age:        applicant?.age?.toString() || '',
+    gender:     applicant?.gender    || 'MALE',
+    passportNo: applicant?.passportNo || '',
+    jobId:      applicant?.jobId      || '',
+    status:     applicant?.status     || 'PENDING',
+    notes:      applicant?.notes      || '',
   })
 
   const { data: jobsData } = useQuery({
@@ -39,9 +43,22 @@ export default function ApplicantModal({ applicant, onClose, onSuccess }: Props)
 
   const mutation = useMutation({
     mutationFn: () => {
+      // Split fullName into firstName + lastName for the backend
+      const parts = form.fullName.trim().split(/\s+/)
+      const firstName = parts[0] || ''
+      const lastName  = parts.slice(1).join(' ') || parts[0] || ''
+
       const fd = new FormData()
-      Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v) })
-      if (photoFile) fd.append('photo', photoFile)
+      fd.append('firstName', firstName)
+      fd.append('lastName',  lastName)
+      if (form.age)        fd.append('age',        form.age)
+      if (form.gender)     fd.append('gender',     form.gender)
+      if (form.passportNo) fd.append('passportNo', form.passportNo)
+      if (form.jobId)      fd.append('jobId',      form.jobId)
+      if (form.status)     fd.append('status',     form.status)
+      if (form.notes)      fd.append('notes',      form.notes)
+      if (photoFile)       fd.append('photo',      photoFile)
+
       return isEdit
         ? api.put(`/applicants/${applicant!.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
         : api.post('/applicants', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
@@ -87,7 +104,8 @@ export default function ApplicantModal({ applicant, onClose, onSuccess }: Props)
         <div className="flex items-center gap-4 mb-5">
           <div className="relative">
             {photoPreview ? (
-              <img src={photoPreview} alt="Preview" className="h-20 w-20 rounded-2xl object-cover border border-slate-200 dark:border-slate-700" />
+              <img src={photoPreview} alt="Preview"
+                className="h-20 w-20 rounded-2xl object-cover border border-slate-200 dark:border-slate-700" />
             ) : (
               <div className="h-20 w-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                 <User className="h-8 w-8 text-slate-400" />
@@ -106,13 +124,22 @@ export default function ApplicantModal({ applicant, onClose, onSuccess }: Props)
         </div>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="First Name *" value={form.firstName} onChange={(e) => set('firstName', e.target.value)} placeholder="Abate" />
-            <Input label="Last Name *" value={form.lastName} onChange={(e) => set('lastName', e.target.value)} placeholder="Abiye Fenta" />
-          </div>
+          {/* Single full name field */}
+          <Input
+            label="Full Name *"
+            value={form.fullName}
+            onChange={(e) => set('fullName', e.target.value)}
+            placeholder="e.g. Abate Abiye Fenta"
+          />
 
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Age *" type="number" value={form.age} onChange={(e) => set('age', e.target.value)} placeholder="25" />
+            <Input
+              label="Age *"
+              type="number"
+              value={form.age}
+              onChange={(e) => set('age', e.target.value)}
+              placeholder="25"
+            />
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Gender *</label>
               <Select value={form.gender} onValueChange={(v) => set('gender', v)}>
@@ -126,7 +153,12 @@ export default function ApplicantModal({ applicant, onClose, onSuccess }: Props)
             </div>
           </div>
 
-          <Input label="Passport Number *" value={form.passportNo} onChange={(e) => set('passportNo', e.target.value)} placeholder="EP1234567" />
+          <Input
+            label="Passport Number *"
+            value={form.passportNo}
+            onChange={(e) => set('passportNo', e.target.value)}
+            placeholder="EP1234567"
+          />
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Job Position</label>
@@ -167,8 +199,12 @@ export default function ApplicantModal({ applicant, onClose, onSuccess }: Props)
 
         <div className="flex gap-3 mt-6">
           <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
-          <Button variant="gradient" className="flex-1" isLoading={mutation.isPending}
-            onClick={() => mutation.mutate()}>
+          <Button
+            variant="gradient"
+            className="flex-1"
+            isLoading={mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
             {isEdit ? 'Save Changes' : 'Add Applicant'}
           </Button>
         </div>
