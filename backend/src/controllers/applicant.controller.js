@@ -34,22 +34,22 @@ const getApplicants = async (req, res, next) => {
       const dataParams = [];
       const dataWhere = buildWhere(status, dataParams);
       dataParams.push(ITEMS_PER_COLUMN, (page - 1) * ITEMS_PER_COLUMN);
+
+      // Sort alphabetically by firstName then lastName
       const data = await queryAll(
-        `SELECT a.*, j.title as "jobTitle", j.id as "jobId_ref"
+        `SELECT a.*, j.title as "jobTitle"
          FROM applicants a
          LEFT JOIN jobs j ON a."jobId" = j.id
          WHERE ${dataWhere}
-         ORDER BY a."createdAt" DESC
+         ORDER BY a."firstName" ASC, a."lastName" ASC
          LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`,
         dataParams
       );
 
-      // Shape job relation
       const shaped = data.map((r) => ({
         ...r,
         job: r.jobId ? { id: r.jobId, title: r.jobTitle } : null,
         jobTitle: undefined,
-        jobId_ref: undefined,
       }));
 
       return {
@@ -60,11 +60,15 @@ const getApplicants = async (req, res, next) => {
       };
     };
 
+    // Run all 3 columns in parallel for speed
     const [accepted, pending, rejected] = await Promise.all([
       fetchColumn('ACCEPTED', acceptedPage),
       fetchColumn('PENDING',  pendingPage),
       fetchColumn('REJECTED', rejectedPage),
     ]);
+
+    // Cache for 10 seconds on CDN/proxy layer
+    res.set('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
 
     return successResponse(res, { accepted, pending, rejected });
   } catch (err) {
@@ -111,13 +115,13 @@ const createApplicant = async (req, res, next) => {
 
     const id = uuidv4();
     const now = new Date().toISOString();
-    const genderVal = gender.toUpperCase();
-    const statusVal = (status || 'PENDING').toUpperCase();
 
     await queryOne(
       `INSERT INTO applicants (id, "firstName", "lastName", age, gender, "passportNo", photo, "photoPublicId", "jobId", status, notes, "createdAt", "updatedAt")
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-      [id, firstName, lastName, parseInt(age), genderVal, passportNo, photo, photoPublicId, jobId || null, statusVal, notes || null, now, now]
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+      [id, firstName, lastName, parseInt(age), gender.toUpperCase(), passportNo,
+       photo, photoPublicId, jobId || null, (status || 'PENDING').toUpperCase(),
+       notes || null, now, now]
     );
 
     const applicant = await queryOne(
@@ -220,7 +224,7 @@ const updateStatus = async (req, res, next) => {
 
     const valid = ['PENDING', 'ACCEPTED', 'REJECTED'];
     if (!valid.includes(status?.toUpperCase())) {
-      return errorResponse(res, 'Invalid status. Must be PENDING, ACCEPTED or REJECTED', 400);
+      return errorResponse(res, 'Invalid status', 400);
     }
 
     const applicant = await queryOne(

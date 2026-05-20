@@ -69,7 +69,9 @@ export default function ApplicantsPage() {
           rejectedPage: pages.rejected,
         },
       }).then((r) => r.data.data as ApplicantsResponse),
-    staleTime: 30 * 1000,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    placeholderData: (prev: ApplicantsResponse | undefined) => prev,
   })
 
   const deleteMutation = useMutation({
