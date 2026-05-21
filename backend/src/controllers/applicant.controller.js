@@ -1,15 +1,10 @@
-const { queryOne, queryAll, queryCount } = require('../config/db');
+const { queryOne, queryAll } = require('../config/db');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../services/cloudinary.service');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const { v4: uuidv4 } = require('uuid');
 
-const ITEMS_PER_COLUMN = 10;
-
 const getApplicants = async (req, res, next) => {
   try {
-    const acceptedPage = Math.max(1, parseInt(req.query.acceptedPage) || 1);
-    const pendingPage  = Math.max(1, parseInt(req.query.pendingPage)  || 1);
-    const rejectedPage = Math.max(1, parseInt(req.query.rejectedPage) || 1);
     const search = req.query.search?.trim() || '';
 
     const buildWhere = (status, params) => {
@@ -23,27 +18,17 @@ const getApplicants = async (req, res, next) => {
       return where;
     };
 
-    const fetchColumn = async (status, page) => {
-      const countParams = [];
-      const countWhere = buildWhere(status, countParams);
-      const total = await queryCount(
-        `SELECT COUNT(*) FROM applicants a WHERE ${countWhere}`,
-        countParams
-      );
+    const fetchColumn = async (status) => {
+      const params = [];
+      const where = buildWhere(status, params);
 
-      const dataParams = [];
-      const dataWhere = buildWhere(status, dataParams);
-      dataParams.push(ITEMS_PER_COLUMN, (page - 1) * ITEMS_PER_COLUMN);
-
-      // Sort alphabetically by firstName then lastName
       const data = await queryAll(
         `SELECT a.*, j.title as "jobTitle"
          FROM applicants a
          LEFT JOIN jobs j ON a."jobId" = j.id
-         WHERE ${dataWhere}
-         ORDER BY a."firstName" ASC, a."lastName" ASC
-         LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`,
-        dataParams
+         WHERE ${where}
+         ORDER BY a."firstName" ASC, a."lastName" ASC`,
+        params
       );
 
       const shaped = data.map((r) => ({
@@ -52,24 +37,16 @@ const getApplicants = async (req, res, next) => {
         jobTitle: undefined,
       }));
 
-      return {
-        data: shaped,
-        total,
-        page,
-        totalPages: Math.ceil(total / ITEMS_PER_COLUMN) || 1,
-      };
+      return { data: shaped, total: shaped.length };
     };
 
-    // Run all 3 columns in parallel for speed
     const [accepted, pending, rejected] = await Promise.all([
-      fetchColumn('ACCEPTED', acceptedPage),
-      fetchColumn('PENDING',  pendingPage),
-      fetchColumn('REJECTED', rejectedPage),
+      fetchColumn('ACCEPTED'),
+      fetchColumn('PENDING'),
+      fetchColumn('REJECTED'),
     ]);
 
-    // Cache for 10 seconds on CDN/proxy layer
     res.set('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
-
     return successResponse(res, { accepted, pending, rejected });
   } catch (err) {
     next(err);

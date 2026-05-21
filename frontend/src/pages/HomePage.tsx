@@ -2,14 +2,13 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, CheckCircle, Clock, XCircle, ArrowRight, Shield,
-  User, BookOpen, Briefcase, ChevronLeft, ChevronRight,
+  User, BookOpen, Briefcase,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
 import api from '@/services/api'
 import PageTransition from '@/components/shared/PageTransition'
-import type { Applicant, ApplicantStatus, ApplicantsResponse, ColumnData } from '@/types'
+import type { Applicant, ApplicantStatus, ApplicantsResponse } from '@/types'
 
 const jobCategories = [
   { name: 'Construction',   color: 'from-orange-500 to-amber-600',  icon: '🏗️', desc: 'Building & infrastructure work' },
@@ -73,37 +72,19 @@ function ApplicantMiniCard({ applicant }: { applicant: Applicant }) {
   )
 }
 
-type Pages = { ACCEPTED: number; PENDING: number; REJECTED: number }
-
 export default function HomePage() {
-  const [pages, setPages] = useState<Pages>({ ACCEPTED: 1, PENDING: 1, REJECTED: 1 })
-
   const { data, isLoading } = useQuery({
-    queryKey: ['applicants-home', pages],
-    queryFn: () =>
-      api.get('/applicants', {
-        params: {
-          acceptedPage: pages.ACCEPTED,
-          pendingPage:  pages.PENDING,
-          rejectedPage: pages.REJECTED,
-        },
-      }).then((r) => r.data.data as ApplicantsResponse),
+    queryKey: ['applicants-home'],
+    queryFn: () => api.get('/applicants').then((r) => r.data.data as ApplicantsResponse),
     retry: false,
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
-    placeholderData: (prev: ApplicantsResponse | undefined) => prev,
   })
 
   const accepted = data?.accepted?.total ?? 0
   const pending  = data?.pending?.total  ?? 0
   const rejected = data?.rejected?.total ?? 0
   const total    = accepted + pending + rejected
-
-  const getColData = (key: ApplicantStatus): ColumnData =>
-    data?.[key.toLowerCase() as keyof ApplicantsResponse] ?? { data: [], total: 0, page: 1, totalPages: 1 }
-
-  const setPage = (key: ApplicantStatus, page: number) =>
-    setPages((p) => ({ ...p, [key]: page }))
 
   return (
     <PageTransition>
@@ -127,17 +108,14 @@ export default function HomePage() {
               <Shield className="h-4 w-4" />
               Admin-managed applicant tracking system
             </motion.div>
-
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6">
               Applicant<br /><span className="gradient-text">Management</span><br />Platform
             </motion.h1>
-
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="text-lg text-slate-400 mb-10 max-w-xl mx-auto leading-relaxed">
               Track, manage and process job applicants across construction, healthcare, human services and more.
             </motion.p>
-
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/applicants">
@@ -178,14 +156,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Applicants Board ── */}
+      {/* ── Applicants Board (no pagination) ── */}
       <section className="py-16 bg-gradient-to-b from-slate-950 to-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-10">
             <div>
               <div className="text-indigo-400 font-semibold text-sm mb-2">Live Board</div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Applicants Overview</h2>
-              <p className="text-slate-400 mt-1 text-sm">Current applicant status across all positions</p>
+              <p className="text-slate-400 mt-1 text-sm">All applicants sorted alphabetically</p>
             </div>
             <Link to="/applicants">
               <Button variant="outline" size="sm"
@@ -198,8 +176,9 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {columns.map((col) => {
-              const colData = getColData(col.key)
-              const applicants: Applicant[] = colData.data
+              const colKey = col.key.toLowerCase() as keyof ApplicantsResponse
+              const colData = data?.[colKey]
+              const applicants: Applicant[] = colData?.data || []
               const Icon = col.icon
 
               return (
@@ -211,11 +190,11 @@ export default function HomePage() {
                       <span className="font-bold text-white">{col.label}</span>
                     </div>
                     <span className={`${col.badge} text-white text-xs font-bold px-2.5 py-1 rounded-full min-w-[28px] text-center`}>
-                      {colData.total}
+                      {colData?.total ?? 0}
                     </span>
                   </div>
 
-                  {/* Cards */}
+                  {/* All cards — no pagination */}
                   <div className="p-3 space-y-2.5 min-h-[120px]">
                     {isLoading ? (
                       Array.from({ length: 3 }).map((_, i) => (
@@ -231,36 +210,13 @@ export default function HomePage() {
                           <motion.div key={applicant.id}
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.04 }}>
+                            transition={{ delay: Math.min(i * 0.03, 0.3) }}>
                             <ApplicantMiniCard applicant={applicant} />
                           </motion.div>
                         ))}
                       </AnimatePresence>
                     )}
                   </div>
-
-                  {/* Pagination */}
-                  {colData.totalPages > 1 && (
-                    <div className="p-3 border-t border-white/10 flex items-center justify-between">
-                      <button
-                        disabled={colData.page <= 1}
-                        onClick={() => setPage(col.key, colData.page - 1)}
-                        className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-400"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <span className="text-xs text-slate-400 font-medium">
-                        {colData.page} / {colData.totalPages}
-                      </span>
-                      <button
-                        disabled={colData.page >= colData.totalPages}
-                        onClick={() => setPage(col.key, colData.page + 1)}
-                        className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-slate-400"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               )
             })}
@@ -280,7 +236,6 @@ export default function HomePage() {
               We manage applicants across a wide range of industries and job types.
             </p>
           </div>
-
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
             {jobCategories.map((cat, i) => (
               <motion.div key={cat.name}

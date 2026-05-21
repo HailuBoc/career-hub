@@ -39,8 +39,6 @@ export interface Applicant {
 export interface ColumnData {
   data: Applicant[]
   total: number
-  page: number
-  totalPages: number
 }
 
 export interface ApplicantsResponse {
