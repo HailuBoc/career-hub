@@ -75,18 +75,20 @@ export default function ApplicantCard({
           <BookOpen className="h-3.5 w-3.5 flex-shrink-0" />
           <span>Passport: <span className="font-medium text-slate-700 dark:text-slate-300">{applicant.passportNo}</span></span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <Briefcase className="h-3.5 w-3.5 flex-shrink-0" />
-          {applicant.job ? (
+        {/* Only show job row when a job is assigned */}
+        {applicant.job ? (
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <Briefcase className="h-3.5 w-3.5 flex-shrink-0" />
             <span>Job: <span className="font-medium text-indigo-600 dark:text-indigo-400">{applicant.job.title}</span></span>
-          ) : isAdmin ? (
-            <span className="text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline" onClick={onEdit}>
-              Job: <span className="font-medium">Choose</span>
+          </div>
+        ) : isAdmin ? (
+          <div className="flex items-center gap-2 text-xs">
+            <Briefcase className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
+            <span className="text-indigo-500 dark:text-indigo-400 cursor-pointer hover:underline" onClick={onEdit}>
+              Assign job
             </span>
-          ) : (
-            <span>Job: <span className="text-slate-400">Not assigned</span></span>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Actions */}

@@ -60,13 +60,12 @@ function ApplicantMiniCard({ applicant }: { applicant: Applicant }) {
           <BookOpen className="h-3 w-3 flex-shrink-0" />
           <span>Passport: <span className="text-slate-300">{applicant.passportNo}</span></span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-          <Briefcase className="h-3 w-3 flex-shrink-0" />
-          {applicant.job
-            ? <span>Job: <span className="text-indigo-400">{applicant.job.title}</span></span>
-            : <span className="text-slate-500">Job: Not assigned</span>
-          }
-        </div>
+        {applicant.job && (
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Briefcase className="h-3 w-3 flex-shrink-0" />
+            <span>Job: <span className="text-indigo-400 font-medium">{applicant.job.title}</span></span>
+          </div>
+        )}
       </div>
     </div>
   )
