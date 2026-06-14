@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Users, CheckCircle, Clock, XCircle, ArrowRight, Shield,
+  CheckCircle, Clock, XCircle, ArrowRight, Shield,
   User, BookOpen, Briefcase,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -80,11 +80,6 @@ export default function HomePage() {
     gcTime: 5 * 60 * 1000,
   })
 
-  const accepted = data?.accepted?.total ?? 0
-  const pending  = data?.pending?.total  ?? 0
-  const rejected = data?.rejected?.total ?? 0
-  const total    = accepted + pending + rejected
-
   return (
     <PageTransition>
       {/* ── Hero ── */}
@@ -129,29 +124,6 @@ export default function HomePage() {
               </Link>
             </motion.div>
           </div>
-
-          {/* Live stats */}
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {[
-              { label: 'Total Applicants', value: total,    icon: Users,       color: 'text-indigo-400' },
-              { label: 'Accepted',         value: accepted, icon: CheckCircle, color: 'text-green-400'  },
-              { label: 'Pending',          value: pending,  icon: Clock,       color: 'text-yellow-400' },
-              { label: 'Rejected',         value: rejected, icon: XCircle,     color: 'text-red-400'    },
-            ].map((stat, i) => {
-              const Icon = stat.icon
-              return (
-                <motion.div key={stat.label}
-                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.6 + i * 0.1 }}
-                  className="text-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <Icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-3xl font-extrabold text-white mb-1">{stat.value}</div>
-                  <div className="text-xs text-slate-400">{stat.label}</div>
-                </motion.div>
-              )
-            })}
-          </motion.div>
         </div>
       </section>
 
@@ -183,14 +155,9 @@ export default function HomePage() {
               return (
                 <div key={col.key} className={`rounded-2xl border ${col.border} ${col.bg} overflow-hidden`}>
                   {/* Column header */}
-                  <div className="flex items-center justify-between p-4 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                      <Icon className={`h-5 w-5 ${col.color}`} />
-                      <span className="font-bold text-white">{col.label}</span>
-                    </div>
-                    <span className={`${col.badge} text-white text-xs font-bold px-2.5 py-1 rounded-full min-w-[28px] text-center`}>
-                      {colData?.total ?? 0}
-                    </span>
+                  <div className="flex items-center gap-2 p-4 border-b border-white/10">
+                    <Icon className={`h-5 w-5 ${col.color}`} />
+                    <span className="font-bold text-white">{col.label}</span>
                   </div>
 
                   {/* All cards — no pagination */}

@@ -18,7 +18,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   process.env.CLIENT_URL,
 ].filter(Boolean);
-
+    
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, Postman)

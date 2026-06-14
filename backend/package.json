@@ -1,4 +1,4 @@
-{
+{ 
   "name": "careerhub-backend",
   "version": "1.0.0",
   "description": "ApplicantHub REST API — Node.js + Express + Neon PostgreSQL",

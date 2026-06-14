@@ -95,7 +95,6 @@ export default function ApplicantsPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="text-white">
                 <h1 className="text-3xl font-extrabold">Applicants</h1>
-                <p className="text-slate-400 mt-1">{totalAll} total applicants</p>
               </div>
               {isAuthenticated && (
                 <Button variant="gradient" leftIcon={<Plus className="h-4 w-4" />} onClick={openCreate}>
